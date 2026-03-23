@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Атомні Схеми — Тест</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a28;
+    --border: #2a2a42;
+    --cyan: #00f5ff;
+    --magenta: #ff0080;
+    --yellow: #ffe600;
+    --green: #00ff88;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Particles */
+  .particles {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    animation: floatUp linear infinite;
+    opacity: 0;
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(100vh) rotate(0deg);    opacity: 0; }
+    10%  { opacity: 0.5; }
+    90%  { opacity: 0.5; }
+    100% { transform: translateY(-120px) rotate(360deg); opacity: 0; }
+  }
+
+  /* ── SCREENS ───────────────────────────────────────── */
+  .screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+  }
+
+  /* ── TITLE ─────────────────────────────────────────── */
+  #title-screen {
+    gap: 32px;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .molecule-svg {
+    filter: drop-shadow(0 0 20px var(--cyan));
+    animation: mPulse 3s ease-in-out infinite;
+  }
+  @keyframes mPulse {
+    0%,100% { filter: drop-shadow(0 0 20px var(--cyan)); }
+    50%     { filter: drop-shadow(0 0 40px var(--cyan)) drop-shadow(0 0 60px var(--magenta)); }
+  }
+
+  h1.main-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(40px, 7vw, 88px);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--cyan), var(--magenta));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: clamp(14px, 1.6vw, 20px);
+    letter-spacing: 2px;
+  }
+
+  .start-btn {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(15px, 1.6vw, 20px);
+    font-weight: 700;
+    letter-spacing: 3px;
+    background: var(--cyan);
+    color: var(--bg);
+    border: none;
+    padding: 20px 60px;
+    cursor: pointer;
+    clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+    transition: all .2s;
+  }
+  .start-btn:hover {
+    background: var(--magenta);
+    transform: scale(1.05);
+    box-shadow: 0 0 30px var(--magenta);
+  }
+
+  /* ── QUIZ ──────────────────────────────────────────── */
+  #quiz-screen {
+    justify-content: flex-start;
+    padding: 24px 5vw 24px;
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  .progress-bar-container {
+    width: 100%;
+    height: 5px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+    transition: width .5s ease;
+    box-shadow: 0 0 10px var(--cyan);
+  }
+
+  .question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .q-number {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(15px, 1.6vw, 20px);
+    color: var(--cyan);
+    letter-spacing: 3px;
+  }
+  .score-display {
+    font-size: clamp(15px, 1.6vw, 20px);
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 28px 36px;
+    position: relative;
+    overflow: hidden;
+    flex: 0 0 auto;
+    animation: slideIn .4s ease;
+  }
+  .question-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 5px; height: 100%;
+    background: linear-gradient(180deg, var(--cyan), var(--magenta));
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .question-top {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .question-illustration { flex-shrink: 0; }
+  .question-right { flex: 1; }
+
+  .formula-display {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(28px, 4vw, 52px);
+    color: var(--yellow);
+    text-shadow: 0 0 20px var(--yellow);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+  }
+  .question-text {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(22px, 2.6vw, 34px);
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .feedback-banner {
+    padding: 14px 22px;
+    font-size: clamp(15px, 1.5vw, 19px);
+    line-height: 1.6;
+    display: none;
+    align-items: flex-start;
+    gap: 12px;
+    flex-shrink: 0;
+    animation: fadeIn .3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .feedback-banner.correct-fb {
+    background: rgba(0,255,136,.1);
+    border: 1px solid var(--green);
+    color: var(--green);
+    display: flex;
+  }
+  .feedback-banner.wrong-fb {
+    background: rgba(255,0,128,.1);
+    border: 1px solid var(--magenta);
+    color: var(--magenta);
+    display: flex;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    flex: 1 1 auto;
+    align-content: stretch;
+  }
+  @media (max-width: 640px) {
+    .options-grid { grid-template-columns: 1fr; }
+    .question-top { flex-direction: column; gap: 14px; }
+  }
+
+  .option-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(16px, 1.7vw, 22px);
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0 28px;
+    cursor: pointer;
+    text-align: left;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    line-height: 1.5;
+    width: 100%;
+    height: 100%;
+    min-height: 72px;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: inset 0 0 20px rgba(0,245,255,.05), 0 0 10px rgba(0,245,255,.2);
+    transform: translateX(4px);
+  }
+  .option-letter {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(14px, 1.4vw, 18px);
+    font-weight: 700;
+    width: 38px; height: 38px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all .2s;
+  }
+  .option-btn:hover:not(:disabled) .option-letter {
+    border-color: var(--cyan);
+    background: var(--cyan);
+    color: var(--bg);
+  }
+  .option-btn.correct {
+    border-color: var(--green) !important;
+    background: rgba(0,255,136,.1) !important;
+    color: var(--green) !important;
+    box-shadow: 0 0 20px rgba(0,255,136,.2) !important;
+  }
+  .option-btn.correct .option-letter { background: var(--green); border-color: var(--green); color: var(--bg); }
+  .option-btn.wrong {
+    border-color: var(--magenta) !important;
+    background: rgba(255,0,128,.1) !important;
+    color: var(--magenta) !important;
+  }
+  .option-btn.wrong .option-letter { background: var(--magenta); border-color: var(--magenta); color: white; }
+  .option-btn:disabled { cursor: default; }
+
+  .next-row {
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+  .next-btn {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(15px, 1.6vw, 20px);
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: transparent;
+    color: var(--cyan);
+    border: 1px solid var(--cyan);
+    padding: 16px 48px;
+    cursor: pointer;
+    transition: all .2s;
+    display: none;
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  }
+  .next-btn:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 20px var(--cyan); }
+  .next-btn.visible { display: block; }
+
+  /* ── RESULT ────────────────────────────────────────── */
+  #result-screen {
+    gap: 26px;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .title-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(12px, 1.2vw, 15px);
+    letter-spacing: 4px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    border: 1px solid var(--cyan);
+    padding: 8px 20px;
+    display: inline-block;
+  }
+
+  .result-badge {
+    width: 180px; height: 180px;
+    border: 2px solid var(--cyan);
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin: 0 auto;
+    animation: spinGlow 4s linear infinite;
+  }
+  @keyframes spinGlow {
+    0%   { box-shadow: 0 0 40px rgba(0,245,255,.3), 0 0 0 2px var(--magenta); }
+    50%  { box-shadow: 0 0 40px rgba(255,0,128,.3), 0 0 0 2px var(--cyan); }
+    100% { box-shadow: 0 0 40px rgba(0,245,255,.3), 0 0 0 2px var(--magenta); }
+  }
+  .result-score {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(44px, 6vw, 64px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--cyan), var(--yellow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .result-total { font-size: 15px; color: var(--muted); letter-spacing: 3px; }
+  .result-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(22px, 4vw, 40px);
+    font-weight: 900;
+    line-height: 1.2;
+  }
+  .result-message {
+    color: var(--muted);
+    font-size: clamp(14px, 1.4vw, 17px);
+    line-height: 1.8;
+    max-width: 600px;
+  }
+
+  .result-bars { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; text-align: left; }
+  .result-bar-row {
+    display: flex; align-items: center; gap: 14px;
+    font-size: clamp(12px, 1.2vw, 15px);
+    color: var(--muted); letter-spacing: 1px;
+  }
+  .result-bar-label { width: 120px; flex-shrink: 0; }
+  .result-bar-track { flex: 1; height: 5px; background: var(--border); }
+  .result-bar-fill  { height: 100%; transition: width 1s ease .4s; }
+  .result-bar-val   { width: 28px; text-align: right; }
+
+  .restart-btn {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(14px, 1.5vw, 18px);
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: var(--magenta);
+    color: white;
+    border: none;
+    padding: 18px 52px;
+    cursor: pointer;
+    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+    transition: all .2s;
+    box-shadow: 0 0 20px rgba(255,0,128,.3);
+  }
+  .restart-btn:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(255,0,128,.5); }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<!-- ══ TITLE ══════════════════════════════════════════ -->
+<div class="screen" id="title-screen" style="display:flex;">
+  <svg class="molecule-svg" width="160" height="120" viewBox="0 0 160 120">
+    <circle cx="80" cy="60" r="28" fill="#ff4060" opacity="0.9"/>
+    <circle cx="30" cy="45" r="18" fill="#00c8ff" opacity="0.9"/>
+    <circle cx="130" cy="45" r="18" fill="#00c8ff" opacity="0.9"/>
+    <circle cx="50" cy="95" r="14" fill="#00c8ff" opacity="0.7"/>
+    <line x1="52" y1="60" x2="30" y2="47" stroke="#aaa" stroke-width="3"/>
+    <line x1="108" y1="60" x2="130" y2="47" stroke="#aaa" stroke-width="3"/>
+    <line x1="68" y1="80" x2="53" y2="90" stroke="#aaa" stroke-width="3"/>
+  </svg>
+  <h1 class="main-title">З ЧОГО ВСЕ<br>ПОБУДОВАНО?</h1>
+  <p class="subtitle">АТОМИ · МОЛЕКУЛИ · МАСА · 15 ЗАПИТАНЬ</p>
+  <button class="start-btn" onclick="startQuiz()">▶ ПОЧАТИ ТЕСТ</button>
+</div>
+
+<!-- ══ QUIZ ═══════════════════════════════════════════ -->
+<div class="screen" id="quiz-screen">
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+  </div>
+  <div class="question-header">
+    <div class="q-number" id="q-number">ЗАПИТАННЯ 01 / 15</div>
+    <div class="score-display" id="score-display">ОЧКИ: 0</div>
+  </div>
+  <div class="question-card" id="question-card">
+    <div class="question-top">
+      <div class="question-illustration" id="q-illustration"></div>
+      <div class="question-right">
+        <div id="q-formula"></div>
+        <div class="question-text" id="q-text"></div>
+      </div>
+    </div>
+  </div>
+  <div class="feedback-banner" id="feedback"></div>
+  <div class="options-grid" id="options-grid"></div>
+  <div class="next-row">
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">ДАЛІ →</button>
+  </div>
+</div>
+
+<!-- ══ RESULT ══════════════════════════════════════════ -->
+<div class="screen" id="result-screen">
+  <div class="title-tag">РЕЗУЛЬТАТ ТЕСТУ</div>
+  <div class="result-badge">
+    <div class="result-score" id="res-score">0</div>
+    <div class="result-total">з 15</div>
+  </div>
+  <div class="result-title" id="res-title"></div>
+  <div class="result-message" id="res-message"></div>
+  <div class="result-bars">
+    <div class="result-bar-row">
+      <div class="result-bar-label">ПРАВИЛЬНО</div>
+      <div class="result-bar-track"><div class="result-bar-fill" id="bar-correct" style="width:0%;background:var(--green)"></div></div>
+      <div class="result-bar-val" id="bv-correct">0</div>
+    </div>
+    <div class="result-bar-row">
+      <div class="result-bar-label">НЕПРАВИЛЬНО</div>
+      <div class="result-bar-track"><div class="result-bar-fill" id="bar-wrong" style="width:0%;background:var(--magenta)"></div></div>
+      <div class="result-bar-val" id="bv-wrong">0</div>
+    </div>
+  </div>
+  <button class="restart-btn" onclick="restart()">↺ СПРОБУВАТИ ЗНОВУ</button>
+</div>
+
+<script>
+/* Particles */
+const pc = document.getElementById('particles');
+const clrs = ['#00f5ff','#ff0080','#ffe600','#00ff88'];
+for (let i = 0; i < 22; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const s = Math.random() * 5 + 2;
+  p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;background:${clrs[i%4]};box-shadow:0 0 ${s*2}px ${clrs[(i+1)%4]};animation-duration:${Math.random()*14+9}s;animation-delay:${Math.random()*10}s;`;
+  pc.appendChild(p);
+}
+
+/* SVG illustrations */
+const svgs = {
+  atom: `<svg width="100" height="100" viewBox="0 0 80 80">
+    <circle cx="40" cy="40" r="10" fill="#ff4060"/>
+    <ellipse cx="40" cy="40" rx="36" ry="14" fill="none" stroke="#00f5ff" stroke-width="1.5" opacity="0.7"/>
+    <ellipse cx="40" cy="40" rx="36" ry="14" fill="none" stroke="#ff0080" stroke-width="1.5" opacity="0.7" transform="rotate(60 40 40)"/>
+    <ellipse cx="40" cy="40" rx="36" ry="14" fill="none" stroke="#ffe600" stroke-width="1.5" opacity="0.7" transform="rotate(120 40 40)"/>
+  </svg>`,
+  molecule: `<svg width="130" height="90" viewBox="0 0 100 70">
+    <circle cx="50" cy="35" r="18" fill="#ff4060"/>
+    <circle cx="15" cy="35" r="12" fill="#00c8ff"/>
+    <circle cx="85" cy="35" r="12" fill="#00c8ff"/>
+    <line x1="27" y1="35" x2="32" y2="35" stroke="#aaa" stroke-width="3"/>
+    <line x1="68" y1="35" x2="73" y2="35" stroke="#aaa" stroke-width="3"/>
+  </svg>`,
+  water: `<svg width="120" height="100" viewBox="0 0 100 80">
+    <circle cx="50" cy="36" r="20" fill="#cc2244"/>
+    <circle cx="18" cy="56" r="13" fill="#00aaff"/>
+    <circle cx="82" cy="56" r="13" fill="#00aaff"/>
+    <line x1="31" y1="48" x2="38" y2="43" stroke="#aaa" stroke-width="2.5"/>
+    <line x1="69" y1="48" x2="62" y2="43" stroke="#aaa" stroke-width="2.5"/>
+    <text x="50" y="41" text-anchor="middle" fill="white" font-size="11" font-family="monospace">O</text>
+    <text x="18" y="60" text-anchor="middle" fill="white" font-size="10" font-family="monospace">H</text>
+    <text x="82" y="60" text-anchor="middle" fill="white" font-size="10" font-family="monospace">H</text>
+  </svg>`,
+  scale: `<svg width="120" height="100" viewBox="0 0 100 80">
+    <rect x="44" y="8" width="12" height="50" fill="#555" rx="2"/>
+    <rect x="18" y="56" width="64" height="6" fill="#444" rx="3"/>
+    <line x1="50" y1="12" x2="20" y2="30" stroke="#00f5ff" stroke-width="2"/>
+    <line x1="50" y1="12" x2="80" y2="30" stroke="#00f5ff" stroke-width="2"/>
+    <circle cx="20" cy="36" r="11" fill="#1a1a28" stroke="#00f5ff" stroke-width="1.5"/>
+    <circle cx="80" cy="30" r="11" fill="#1a1a28" stroke="#ff0080" stroke-width="1.5"/>
+    <text x="20" y="40" text-anchor="middle" fill="#00f5ff" font-size="9" font-family="monospace">Ar</text>
+    <text x="80" y="34" text-anchor="middle" fill="#ff0080" font-size="9" font-family="monospace">Mr</text>
+  </svg>`,
+  periodic: `<svg width="130" height="100" viewBox="0 0 110 85">
+    <rect x="4" y="4" width="46" height="52" rx="4" fill="#1a1a28" stroke="#00f5ff" stroke-width="1.5"/>
+    <text x="27" y="32" text-anchor="middle" fill="white" font-size="24" font-family="sans-serif" font-weight="900">O</text>
+    <text x="27" y="48" text-anchor="middle" fill="#00f5ff" font-size="9" font-family="monospace">15.999</text>
+    <text x="9"  y="17" fill="#888" font-size="9" font-family="monospace">8</text>
+    <rect x="58" y="4" width="48" height="52" rx="4" fill="#1a1a28" stroke="#ffe600" stroke-width="1.5"/>
+    <text x="82" y="32" text-anchor="middle" fill="white" font-size="22" font-family="sans-serif" font-weight="900">Cl</text>
+    <text x="82" y="48" text-anchor="middle" fill="#ffe600" font-size="9" font-family="monospace">35.45</text>
+    <text x="63" y="17" fill="#888" font-size="9" font-family="monospace">17</text>
+  </svg>`,
+  formula: `<svg width="120" height="90" viewBox="0 0 100 70">
+    <text x="8"  y="52" fill="white" font-size="38" font-family="sans-serif" font-weight="900">H</text>
+    <text x="40" y="60" fill="#ffe600" font-size="22" font-family="monospace">2</text>
+    <text x="54" y="52" fill="white" font-size="38" font-family="sans-serif" font-weight="900">O</text>
+    <rect x="3" y="4" width="94" height="62" fill="none" stroke="#00f5ff" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+  </svg>`,
+  urea: `<svg width="150" height="90" viewBox="0 0 140 75">
+    <text x="4"  y="54" fill="white" font-size="30" font-family="sans-serif" font-weight="900">CO</text>
+    <text x="68" y="38" fill="#00f5ff" font-size="22" font-family="monospace">(</text>
+    <text x="78" y="58" fill="white" font-size="28" font-family="sans-serif" font-weight="700">NH</text>
+    <text x="116" y="65" fill="#ffe600" font-size="17" font-family="monospace">2</text>
+    <text x="122" y="38" fill="#00f5ff" font-size="22" font-family="monospace">)</text>
+    <text x="131" y="65" fill="#ff0080" font-size="17" font-family="monospace">2</text>
+  </svg>`,
+  aom: `<svg width="110" height="100" viewBox="0 0 100 90">
+    <circle cx="50" cy="40" r="30" fill="#1a1a28" stroke="#ffe600" stroke-width="2"/>
+    <path d="M50 13 L54 34 L50 40 L46 34 Z" fill="#00f5ff" opacity="0.9"/>
+    <text x="50" y="78" text-anchor="middle" fill="#ffe600" font-size="11" font-family="monospace">1 а.о.м.</text>
+    <text x="50" y="46" text-anchor="middle" fill="white" font-size="10" font-family="monospace">C-12</text>
+    <text x="50" y="58" text-anchor="middle" fill="#888" font-size="9" font-family="monospace">÷ 12</text>
+  </svg>`,
+  sucrose: `<svg width="160" height="80" viewBox="0 0 150 68">
+    <text x="4"  y="48" fill="white" font-size="28" font-family="sans-serif" font-weight="900">C</text>
+    <text x="24" y="57" fill="#ff0080" font-size="16" font-family="monospace">12</text>
+    <text x="44" y="48" fill="white" font-size="28" font-family="sans-serif" font-weight="900">H</text>
+    <text x="64" y="57" fill="#ffe600" font-size="16" font-family="monospace">22</text>
+    <text x="84" y="48" fill="white" font-size="28" font-family="sans-serif" font-weight="900">O</text>
+    <text x="104" y="57" fill="#00f5ff" font-size="16" font-family="monospace">11</text>
+    <line x1="4" y1="65" x2="130" y2="65" stroke="#ffe600" stroke-width="1.5" stroke-dasharray="3,3"/>
+  </svg>`,
+  ballstick: `<svg width="130" height="100" viewBox="0 0 120 80">
+    <line x1="30" y1="40" x2="60" y2="26" stroke="#777" stroke-width="3"/>
+    <line x1="60" y1="26" x2="90" y2="40" stroke="#777" stroke-width="3"/>
+    <line x1="60" y1="26" x2="60" y2="8"  stroke="#777" stroke-width="3"/>
+    <circle cx="30" cy="40" r="14" fill="#00c8ff"/>
+    <circle cx="90" cy="40" r="14" fill="#00c8ff"/>
+    <circle cx="60" cy="26" r="18" fill="#cc2244"/>
+    <circle cx="60" cy="8"  r="11" fill="#ff4060"/>
+    <text x="30" y="44" text-anchor="middle" fill="white" font-size="10" font-family="monospace">H</text>
+    <text x="90" y="44" text-anchor="middle" fill="white" font-size="10" font-family="monospace">H</text>
+    <text x="60" y="31" text-anchor="middle" fill="white" font-size="10" font-family="monospace">O</text>
+  </svg>`,
+};
+
+const questions = [
+  { text:"Що таке атом у хімії?", illustration:svgs.atom,
+    options:["Найдрібніша частинка речовини, здатна існувати самостійно","Найменша частинка хімічного елемента","Група молекул, з'єднаних між собою","Будь-яка мікроскопічна частинка"],
+    correct:1, explanation:"Атом — найменша частинка хімічного елемента, що зберігає його властивості." },
+  { text:"Що таке молекула?", illustration:svgs.molecule,
+    options:["Окремий атом будь-якого елемента","Найдрібніша частинка речовини, здатна існувати самостійно та зберігати її властивості","Сукупність електронів навколо ядра","Будь-яке мікроскопічне тіло"],
+    correct:1, explanation:"Молекула — найдрібніша частинка речовини, що може існувати самостійно і зберігати всі хімічні властивості." },
+  { text:"Що показує хімічний символ у формулі?", formula:"H₂O", illustration:svgs.formula,
+    options:["Кількість атомів елемента","Заряд атома","Який саме елемент використано у речовині","Масу молекули"],
+    correct:2, explanation:"Хімічний символ (літера) показує, який саме елемент використано у сполуці." },
+  { text:"Що означає індекс у хімічній формулі (маленька цифра праворуч знизу)?", illustration:svgs.formula,
+    options:["Відносну атомну масу елемента","Кількість атомів цього елемента у молекулі","Порядковий номер елемента в таблиці Менделєєва","Заряд іона"],
+    correct:1, explanation:"Індекс (цифра праворуч знизу) показує кількість атомів цього елемента у молекулі." },
+  { text:"Скільки атомів Гідрогену та Оксигену у молекулі води H₂O?", illustration:svgs.water, formula:"H₂O",
+    options:["1 Гідроген і 2 Оксигену","2 Гідрогену і 2 Оксигену","2 Гідрогену і 1 Оксиген","1 Гідроген і 1 Оксиген"],
+    correct:2, explanation:"Індекс 2 при H → 2 атоми Гідрогену. Відсутність індексу при O → 1 атом Оксигену." },
+  { text:"З яких елементів складається сахароза C₁₂H₂₂O₁₁?", illustration:svgs.sucrose, formula:"C₁₂H₂₂O₁₁",
+    options:["Тільки Карбон і Гідроген","Карбон, Гідроген і Оксиген","Карбон, Нітроген і Оксиген","Гідроген і Оксиген"],
+    correct:1, explanation:"C₁₂H₂₂O₁₁ — сахароза містить Карбон (C), Гідроген (H) та Оксиген (O)." },
+  { text:"Що означає індекс за дужками у формулі CO(NH₂)₂?", illustration:svgs.urea, formula:"CO(NH₂)₂",
+    options:["Стосується лише останнього атома перед дужкою","Показує кількість молекул","Стосується ВСІХ атомів, взятих у дужки","Показує заряд групи атомів"],
+    correct:2, explanation:"Індекс за дужками стосується ВСІХ атомів у дужках. CO(NH₂)₂: 2N + 4H." },
+  { text:"Чому атоми неможливо зважити на звичайних терезах?", illustration:svgs.scale,
+    options:["Бо атоми занадто великі","Бо маса найважчих атомів — лише близько 10⁻²² грама","Бо атоми не мають маси","Бо терезі можуть зламатися"],
+    correct:1, explanation:"Маса атомів ~10⁻²² г — звичайні терезі безсилі. Вченим потрібні мас-спектрометри." },
+  { text:"Чому дорівнює 1 атомна одиниця маси (а.о.м.)?", illustration:svgs.aom,
+    options:["1/10 маси атома Гідрогену","1/12 маси атома Карбону-12","Масі одного протона","Масі одного електрона"],
+    correct:1, explanation:"1 а.о.м. = 1/12 маси атома Карбону-12. Це стандартний «важок» для мікросвіту." },
+  { text:"Де можна знайти відносну атомну масу (Ar) елемента?", illustration:svgs.periodic,
+    options:["У словнику хімічних термінів","Треба виміряти самостійно","У Періодичній системі Менделєєва","На упаковці речовини"],
+    correct:2, explanation:"Відносна атомна маса (Ar) кожного елемента зазначена в Періодичній системі Менделєєва." },
+  { text:"Яке значення треба взяти для Ar(Cl) при розрахунках?", illustration:svgs.periodic, formula:"Ar(Cl) = 35,45",
+    options:["35 (округлити до цілого)","36","35,5 (залишати з десятими)","34"],
+    correct:2, explanation:"Хлор — виняток! Ar(Cl) = 35,5 (завжди залишаємо з десятими)." },
+  { text:"Як обчислити відносну молекулярну масу (Mr) речовини?", illustration:svgs.scale,
+    options:["Поділити масу на кількість атомів","Скласти Ar усіх елементів без урахування індексів","Перемножити Ar кожного елемента на його індекс і скласти всі добутки","Знайти у Періодичній таблиці"],
+    correct:2, explanation:"Mr = сума (Ar × індекс) для кожного елемента у формулі." },
+  { text:"Чому дорівнює Mr(H₂O)?", illustration:svgs.water, formula:"Mr(H₂O) = ?",
+    options:["17","18","20","16"],
+    correct:1, explanation:"Mr(H₂O) = 2×1 + 16 = 18. Молекула води у 18 разів важча за 1 а.о.м." },
+  { text:"Чому дорівнює Mr(H₂SO₄) — сульфатна кислота?", illustration:svgs.ballstick, formula:"H₂SO₄",
+    options:["64","80","98","48"],
+    correct:2, explanation:"Mr(H₂SO₄) = 2×1 + 32 + 4×16 = 2 + 32 + 64 = 98." },
+  { text:"Яка різниця між кулестрижневою та напівсферичною моделями молекули?", illustration:svgs.ballstick,
+    options:["Вони однакові, лише різні назви","Напівсфери показують зв'язки, кулестрижні — ні","Напівсферична: атоми впритул (для простих молекул); кулестрижнева: кульки на стрижнях-зв'язках (для складних)","Кулестрижнева — лише для газів"],
+    correct:2, explanation:"Напівсферична — атоми впритул, для простих молекул. Кулестрижнева — кульки на стрижнях, для складних." },
+];
+
+let current = 0, score = 0, answered = false;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+  document.getElementById(id).style.display = 'flex';
+}
+
+function startQuiz() {
+  current = 0; score = 0;
+  showScreen('quiz-screen');
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  const q = questions[current];
+  document.getElementById('q-number').textContent = `ЗАПИТАННЯ ${String(current+1).padStart(2,'0')} / 15`;
+  document.getElementById('score-display').textContent = `ОЧКИ: ${score}`;
+  document.getElementById('progress-bar').style.width = `${(current/15)*100}%`;
+  document.getElementById('feedback').className = 'feedback-banner';
+  document.getElementById('next-btn').className = 'next-btn';
+  document.getElementById('q-illustration').innerHTML = q.illustration || '';
+  document.getElementById('q-formula').innerHTML = q.formula ? `<div class="formula-display">${q.formula}</div>` : '';
+  document.getElementById('q-text').textContent = q.text;
+
+  const card = document.getElementById('question-card');
+  card.style.animation = 'none'; void card.offsetHeight; card.style.animation = 'slideIn .4s ease';
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  ['А','Б','В','Г'].forEach((letter, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letter}</span>${q.options[i]}`;
+    btn.onclick = () => selectAnswer(i, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx, btn) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById('feedback');
+  if (idx === q.correct) {
+    score++;
+    btn.classList.add('correct');
+    fb.className = 'feedback-banner correct-fb';
+    fb.innerHTML = `<span>✓</span><span>Правильно! ${q.explanation}</span>`;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.option-btn')[q.correct].classList.add('correct');
+    fb.className = 'feedback-banner wrong-fb';
+    fb.innerHTML = `<span>✗</span><span>Не зовсім. ${q.explanation}</span>`;
+  }
+  document.getElementById('score-display').textContent = `ОЧКИ: ${score}`;
+  document.getElementById('next-btn').className = 'next-btn visible';
+}
+
+function nextQuestion() {
+  current++;
+  current >= questions.length ? showResult() : showQuestion();
+}
+
+function showResult() {
+  showScreen('result-screen');
+  document.getElementById('res-score').textContent = score;
+  const msgs = [
+    [15,'🏆 ІДЕАЛЬНИЙ РЕЗУЛЬТАТ!','Неймовірно! Ти знаєш атоми та молекули краще за будь-кого. Ти справжній хімік-архітектор!'],
+    [12,'⚡ ВІДМІННО!','Чудовий результат! Ти чудово розумієш будову речовини. Ще трохи практики — і ти непереможна!'],
+    [9,'✨ ДОБРЕ!','Гарна робота! Основи засвоєні. Повтори теми про Mr та індекси — і буде ще краще!'],
+    [6,'📚 НЕПОГАНО','Є гарна база, але деякі теми потребують повторення. Переглянь матеріал і спробуй ще раз!'],
+    [0,'🔬 ПРОДОВЖУЙ ВЧИТИСЬ!','Не засмучуйся! Хімія — це цікаво. Перечитай презентацію та спробуй знову — у тебе все вийде!'],
+  ];
+  const [,title,msg] = msgs.find(([t]) => score >= t);
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('res-message').textContent = msg;
+  const wrong = 15 - score;
+  setTimeout(() => {
+    document.getElementById('bar-correct').style.width = `${(score/15)*100}%`;
+    document.getElementById('bar-wrong').style.width   = `${(wrong/15)*100}%`;
+    document.getElementById('bv-correct').textContent  = score;
+    document.getElementById('bv-wrong').textContent    = wrong;
+  }, 120);
+}
+
+function restart() {
+  document.getElementById('bar-correct').style.width = '0%';
+  document.getElementById('bar-wrong').style.width   = '0%';
+  showScreen('title-screen');
+}
+</script>
+</body>
+</html>
